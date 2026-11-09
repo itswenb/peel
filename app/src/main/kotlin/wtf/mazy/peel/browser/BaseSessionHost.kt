@@ -462,11 +462,33 @@ abstract class BaseSessionHost : PeelActivity(), SessionHost, TranslationHost {
     }
 
     protected suspend fun setupThemeColorExtensionIfEnabled() {
-        if (!effectiveSettings.dynamicStatusBar) return
         val session = geckoSession ?: return
         val delegate = session.contentDelegate as? PeelContentDelegate ?: return
         val ext = GeckoRuntimeProvider.ensureThemeColorExtension(applicationContext) ?: return
         delegate.setupThemeColorExtension(ext, session)
+        session.webExtensionController.setMessageDelegate(ext, object : org.mozilla.geckoview.WebExtension.MessageDelegate {
+            override fun onMessage(nativeApp: String, message: Any, sender: org.mozilla.geckoview.WebExtension.MessageSender): org.mozilla.geckoview.GeckoResult<Any>? {
+                if (!sender.isTopLevel || sender.session != session || message !is org.json.JSONObject) return null
+                val url = android.net.Uri.parse(sender.url)
+                if (url.scheme !in listOf("http", "https") || url.host.isNullOrEmpty()) return null
+                val values = message.optJSONArray("pattern") ?: return null
+                if (values.length() > 20) return null
+                val pattern = LongArray(values.length()) { i ->
+                    val value = values.opt(i)
+                    if (value !is Number || value.toDouble() != value.toLong().toDouble() || value.toLong() !in 0..10000) return null
+                    value.toLong()
+                }
+                @Suppress("DEPRECATION")
+                val vibrator = if (android.os.Build.VERSION.SDK_INT >= 31) {
+                    (getSystemService(VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager).defaultVibrator
+                } else {
+                    getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
+                }
+                if (pattern.isEmpty() || pattern.all { it == 0L }) vibrator.cancel()
+                else vibrator.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0L) + pattern, -1))
+                return null
+            }
+        }, "peelVibration")
     }
 
     protected fun bindDelegates(
@@ -915,7 +937,6 @@ abstract class BaseSessionHost : PeelActivity(), SessionHost, TranslationHost {
             }
             val leftPad = content.left
             val rightPad = content.right
-            val topPad = content.top
             val systemBottom = maxOf(content.bottom, ime.bottom)
             panelControls?.let {
                 val lp = it.layoutParams as FrameLayout.LayoutParams
@@ -928,9 +949,9 @@ abstract class BaseSessionHost : PeelActivity(), SessionHost, TranslationHost {
                     it.requestLayout()
                 }
             }
-            applyBrowserContentInsets(leftPad, topPad, rightPad, systemBottom + panelControlsHeight)
+            applyBrowserContentInsets(0, 0, 0, ime.bottom + panelControlsHeight)
             browserControls?.onImeVisibilityChanged(ime.bottom > 0)
-            WindowInsetsCompat.CONSUMED
+            insets
         }
     }
 

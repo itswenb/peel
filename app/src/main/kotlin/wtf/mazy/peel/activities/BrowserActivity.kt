@@ -644,8 +644,8 @@ class BrowserActivity : BaseSessionHost() {
             wtf.mazy.peel.browser.CertStoreBridge.ensure(applicationContext)
             wtf.mazy.peel.browser.CertStoreBridge.awaitCertsReady()
             attachPageBridge()
-            if (restore != null) geckoSession?.restoreState(restore) else loadURL(url)
             setupThemeColorExtensionIfEnabled()
+            if (restore != null) geckoSession?.restoreState(restore) else loadURL(url)
             setupMediaPlayback(settings)
             autoReloadController.start(settings)
         }
