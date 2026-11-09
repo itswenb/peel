@@ -359,6 +359,7 @@ abstract class BaseSessionHost : PeelActivity(), SessionHost, TranslationHost {
             getThemeColor = ::themeBackgroundColor,
             scrimColor = ContextCompat.getColor(this, R.color.floating_controls_scrim),
             setFullscreen = { isFullscreen = it },
+            transparentBars = !showToolbar,
         )
     }
 
@@ -918,16 +919,21 @@ abstract class BaseSessionHost : PeelActivity(), SessionHost, TranslationHost {
         val root = browserRoot ?: return
         val insetTypes = WindowInsetsCompat.Type.systemBars() or
                 WindowInsetsCompat.Type.displayCutout()
+        root.viewTreeObserver.addOnGlobalLayoutListener { root.post { ViewCompat.requestApplyInsets(root) } }
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
             val sys = insets.getInsets(insetTypes)
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
             statusBarScrim?.let {
-                it.layoutParams.height = sys.top
-                it.requestLayout()
+                if (it.layoutParams.height != sys.top) {
+                    it.layoutParams.height = sys.top
+                    it.requestLayout()
+                }
             }
             navigationBarScrim?.let {
-                it.layoutParams.height = sys.bottom
-                it.requestLayout()
+                if (it.layoutParams.height != sys.bottom) {
+                    it.layoutParams.height = sys.bottom
+                    it.requestLayout()
+                }
             }
             // the cutout inset survives a system-bar hide, so it has to be dropped explicitly
             val content = if (isFullscreen) {
@@ -951,6 +957,14 @@ abstract class BaseSessionHost : PeelActivity(), SessionHost, TranslationHost {
             }
             applyBrowserContentInsets(0, 0, 0, ime.bottom + panelControlsHeight)
             browserControls?.onImeVisibilityChanged(ime.bottom > 0)
+            root.post {
+                geckoSession?.let {
+                    org.mozilla.geckoview.PeelSafeArea.update(
+                        it, content.top, content.right,
+                        (content.bottom - ime.bottom - panelControlsHeight).coerceAtLeast(0), content.left,
+                    )
+                }
+            }
             insets
         }
     }

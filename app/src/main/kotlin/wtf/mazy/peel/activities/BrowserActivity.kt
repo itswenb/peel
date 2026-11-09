@@ -484,6 +484,7 @@ class BrowserActivity : BaseSessionHost() {
     }
 
     override fun onFirstContentfulPaint() {
+        requestInsetsUpdate()
         crashRecoveryCount = 0
     }
 

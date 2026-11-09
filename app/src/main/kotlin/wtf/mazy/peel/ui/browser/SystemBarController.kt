@@ -14,6 +14,7 @@ class SystemBarController(
     private val getThemeColor: () -> Int,
     private val scrimColor: Int,
     private val setFullscreen: (Boolean) -> Unit,
+    private val transparentBars: Boolean,
 ) {
     private val insetsController by lazy {
         WindowInsetsControllerCompat(window, window.decorView)
@@ -158,7 +159,7 @@ class SystemBarController(
     private fun applyTop(color: Int) {
         currentTopColor = color
         val rendered = dimmed(color)
-        statusBarScrim?.setBackgroundColor(rendered)
+        statusBarScrim?.setBackgroundColor(if (transparentBars) android.graphics.Color.TRANSPARENT else rendered)
         insetsController.isAppearanceLightStatusBars =
             ColorUtils.calculateLuminance(rendered) > 0.5
     }
@@ -166,7 +167,7 @@ class SystemBarController(
     private fun applyBottom(color: Int) {
         currentBottomColor = color
         val rendered = dimmed(color)
-        navigationBarScrim?.setBackgroundColor(rendered)
+        navigationBarScrim?.setBackgroundColor(if (transparentBars) android.graphics.Color.TRANSPARENT else rendered)
         insetsController.isAppearanceLightNavigationBars =
             ColorUtils.calculateLuminance(rendered) > 0.5
     }

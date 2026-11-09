@@ -113,5 +113,5 @@ abstract class SessionPageActivity : BaseSessionHost() {
     protected open fun onPageTitleChanged(title: String?) = Unit
 
     override fun onPageStarted() = Unit
-    override fun onFirstContentfulPaint() = Unit
+    override fun onFirstContentfulPaint() = requestInsetsUpdate()
 }
