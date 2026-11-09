@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Theme Color",
-  "version": "13",
+  "version": "14",
   "browser_specific_settings": {
     "gecko": {
       "id": "theme-color@peel.mazy.wtf"
@@ -13,9 +13,18 @@
         "<all_urls>"
       ],
       "js": [
-        "content.js",
+        "content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
         "vibration.js"
       ],
+      "all_frames": true,
       "run_at": "document_start"
     }
   ],

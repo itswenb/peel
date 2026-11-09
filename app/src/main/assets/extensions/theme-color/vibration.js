@@ -1,5 +1,4 @@
 (function () {
-  if (window !== window.top) return;
   try {
     exportFunction(function (value) {
       var pattern = Array.isArray(value) ? value : [value];

@@ -469,7 +469,7 @@ abstract class BaseSessionHost : PeelActivity(), SessionHost, TranslationHost {
         delegate.setupThemeColorExtension(ext, session)
         session.webExtensionController.setMessageDelegate(ext, object : org.mozilla.geckoview.WebExtension.MessageDelegate {
             override fun onMessage(nativeApp: String, message: Any, sender: org.mozilla.geckoview.WebExtension.MessageSender): org.mozilla.geckoview.GeckoResult<Any>? {
-                if (!sender.isTopLevel || sender.session != session || message !is org.json.JSONObject) return null
+                if (sender.environmentType != org.mozilla.geckoview.WebExtension.MessageSender.ENV_TYPE_CONTENT_SCRIPT || sender.session != session || message !is org.json.JSONObject) return null
                 val url = android.net.Uri.parse(sender.url)
                 if (url.scheme !in listOf("http", "https") || url.host.isNullOrEmpty()) return null
                 val values = message.optJSONArray("pattern") ?: return null
